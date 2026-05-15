@@ -22,7 +22,7 @@ Contexto obtenido del grafo:
 Pregunta del usuario: {question}
 
 ⚠️ REGLAS CRÍTICAS DE RESPUESTA:
-1. Si el contexto contiene información útil, redacta una respuesta amigable, bien estructurada y detallada en español.
+1. Si el contexto contiene información útil, redacta una respuesta amigable, bien estructurada y detailed en español.
 2. Si el contexto está completamente vacío, es una lista vacía `[]`, o no contiene datos relacionados con la pregunta, NO inventes nada. Responde exactamente con este formato:
    "Lo siento, actualmente no tengo registros en la base de datos que coincidan con '[aquí repite el término buscado por el usuario]'. Por favor, verifica que el nombre esté bien escrito (respetando mayúsculas y tildes) o intenta con otra consulta sobre áreas como IA Generativa, Machine Learning o Robótica."
 """
@@ -31,6 +31,34 @@ PROMPT_QA_PERSONALIZADO = PromptTemplate(
     input_variables=["context", "question"], 
     template=plantilla_qa
 )
+
+# ==============================================================================
+# 🌟 CONFIGURACIÓN GLOBAL DEL CONTEXTUALIZADOR (Para importación externa desde main.py)
+# ==============================================================================
+llm_contextualizador = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0)
+
+instruccion_contexto = """Dado el siguiente historial de conversación y una pregunta de seguimiento del usuario, 
+reformula la pregunta para que sea una consulta independiente y explícita que se pueda entender 
+SIN necesidad de ver el historial. 
+
+⚠️ REGLA CRÍTICA DE REFORMULACIÓN:
+Mantén los términos técnicos, siglas, acrónimos y nombres propios EXACTAMENTE igual a como se mencionaron en la conversación. 
+Por ejemplo:
+- Si el usuario dice "NLP", mantén "NLP". NO lo expandas a "Procesamiento de Lenguaje Natural".
+- Si dice "IA Generativa", mantén "IA Generativa".
+Respeta mayúsculas, minúsculas y siglas de los conceptos clave para no romper las búsquedas.
+
+NO respondas la pregunta, solo reformúlala en español."""
+
+prompt_contexto = ChatPromptTemplate.from_messages([
+    ("system", instruccion_contexto),
+    MessagesPlaceholder(variable_name="chat_history"),
+    ("human", "{question}"),
+])
+
+# Esta es la cadena que tu servidor de FastAPI (main.py) necesita importar directamente 
+cadena_contextualizadora = prompt_contexto | llm_contextualizador | StrOutputParser()
+
 
 def inicializar_agente_graph_rag():
     """
@@ -44,10 +72,9 @@ def inicializar_agente_graph_rag():
         return None
         
     llm = ChatGoogleGenerativeAI(
-        model="gemini-flash-latest",
+        model="gemini-flash-latest",  # 👈 Actualizado a Gemini 3 Flash para mayor precisión lógica
         temperature=0
     )
-    
     
     cadena_ia = GraphCypherQAChain.from_llm(
         llm=llm,
@@ -55,7 +82,7 @@ def inicializar_agente_graph_rag():
         verbose=True,
         allow_dangerous_requests=True, 
         qa_prompt=PROMPT_QA_PERSONALIZADO,
-        top_k=25 
+        top_k=50  
     )
     
     return cadena_ia
@@ -73,30 +100,7 @@ if __name__ == "__main__":
     agente = inicializar_agente_graph_rag()
     
     if agente:
-        llm_contextualizador = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0)
         historial_chat = []
-
-        # Prompt de contextualización estricto para evitar que expanda siglas como NLP
-        instruccion_contexto = """Dado el siguiente historial de conversación y una pregunta de seguimiento del usuario, 
-        reformula la pregunta para que sea una consulta independiente y explícita que se pueda entender 
-        SIN necesidad de ver el historial. 
-
-        ⚠️ REGLA CRÍTICA DE REFORMULACIÓN:
-        Mantén los términos técnicos, siglas, acrónimos y nombres propios EXACTAMENTE igual a como se mencionaron en la conversación. 
-        Por ejemplo:
-        - Si el usuario dice "NLP", mantén "NLP". NO lo expandas a "Procesamiento de Lenguaje Natural".
-        - Si dice "IA Generativa", mantén "IA Generativa".
-        Respeta mayúsculas, minúsculas y siglas de los conceptos clave para no romper las búsquedas.
-        
-        NO respondas la pregunta, solo reformúlala en español."""
-        
-        prompt_contexto = ChatPromptTemplate.from_messages([
-            ("system", instruccion_contexto),
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("human", "{question}"),
-        ])
-        
-        cadena_contextualizadora = prompt_contexto | llm_contextualizador | StrOutputParser()
 
         print("\n ¡Agente de IA operativo y conectado a AuraDB (Con Memoria de Contexto Opciones de Ahorro)!")
         print("Escribe tu pregunta sobre los datos del grafo (o escribe 'salir' para terminar):")
@@ -112,15 +116,12 @@ if __name__ == "__main__":
                 continue
                 
             try:
-                
-                # Solo le enviamos los últimos 4 mensajes (2 turnos) al contextualizador.
-                # Suficiente para saber que venimos de hablar de "NLP" sin arrastrar megabytes de texto antiguo.
+                # Ventana deslizante de protección: enviamos solo los últimos 4 mensajes (2 turnos)
                 if len(historial_chat) > 0:
                     pregunta_final = cadena_contextualizadora.invoke({
                         "chat_history": historial_chat[-4:],  
                         "question": pregunta_usuario
                     })
-                    # print(f"🔍 [Query Optimizada]: {pregunta_final}")
                 else:
                     pregunta_final = pregunta_usuario
 
@@ -131,13 +132,8 @@ if __name__ == "__main__":
                 print("\n🤖 Agente:")
                 print(respuesta["result"])
                 
-                
-                # Guardamos la pregunta real del usuario tal cual.
+                # Persistencia estratégica ultra ligera en memoria RAM para las pruebas de terminal
                 historial_chat.append(HumanMessage(content=pregunta_usuario))
-                
-                # En vez de guardar en el historial la lista de 25 títulos pesados que devolvió el agente, 
-                # guardamos un marcador de posición ultra ligero. Al contextualizador solo le importa saber 
-                # el hilo de la conversación, no la data cruda. ¡Ahorramos miles de tokens por turno!
                 historial_chat.append(AIMessage(content="Entendido. Te mostré los resultados correspondientes filtrados en el grafo."))
                 
             except Exception as e:
