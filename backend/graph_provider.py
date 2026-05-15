@@ -5,7 +5,7 @@ from langchain_neo4j import Neo4jGraph
 # Cargar las variables del archivo .env
 load_dotenv(dotenv_path="../.env")
 
-# 🛠️ AGREGAMOS .strip() PARA LIMPIAR CARACTERES INVISIBLES DE WINDOWS
+# 
 URI = os.getenv("NEO4J_URI", "").strip()
 USER = os.getenv("NEO4J_USERNAME", "").strip()
 PASSWORD = os.getenv("NEO4J_PASSWORD", "").strip()
@@ -26,7 +26,7 @@ def obtener_grafo_ia():
 if __name__ == "__main__":
     print("📡 Iniciando conexión inteligente con Neo4j AuraDB...")
     
-    print("\n🕵️--- CONTROL DE SANIDAD DE CREDENCIALES ---")
+    print("\n--- CONTROL DE SANIDAD DE CREDENCIALES ---")
     print(f"-> URI detectada: {URI}")
     print(f"-> Usuario detectado: {USER}")
     print(f"-> ¿Contraseña detectada?: {'SÍ' if PASSWORD else 'NO'}")
@@ -39,10 +39,10 @@ if __name__ == "__main__":
     grafo = obtener_grafo_ia()
     
     if grafo:
-        print("✅ ¡Conexión de IA establecida exitosamente!\n")
-        print("🤖 Esquema que el LLM leerá en memoria:")
+        print(" ¡Conexión de IA establecida exitosamente!\n")
+        print(" Esquema que el LLM leerá en memoria:")
         print("==================================================================")
         print(grafo.schema)
         print("==================================================================")
     else:
-        print("❌ La prueba de conexión ha fallado. Revisa el error de arriba.")
+        print(" La prueba de conexión ha fallado. Revisa el error de arriba.")
