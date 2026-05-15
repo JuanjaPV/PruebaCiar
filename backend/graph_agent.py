@@ -33,9 +33,10 @@ PROMPT_QA_PERSONALIZADO = PromptTemplate(
 )
 
 # ==============================================================================
-# 🌟 CONFIGURACIÓN GLOBAL DEL CONTEXTUALIZADOR (Para importación externa desde main.py)
+# 🌟 INSTANCIA GLOBAL DE GEMINI (Centralizado para importación externa)
 # ==============================================================================
-llm_contextualizador = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0)
+# Al dejarlo global, main.py lo puede importar sin problemas para su aduana de control
+llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0)
 
 instruccion_contexto = """Dado el siguiente historial de conversación y una pregunta de seguimiento del usuario, 
 reformula la pregunta para que sea una consulta independiente y explícita que se pueda entender 
@@ -56,14 +57,14 @@ prompt_contexto = ChatPromptTemplate.from_messages([
     ("human", "{question}"),
 ])
 
-# Esta es la cadena que tu servidor de FastAPI (main.py) necesita importar directamente 
-cadena_contextualizadora = prompt_contexto | llm_contextualizador | StrOutputParser()
+# Reutilizamos la misma instancia global de 'llm' aquí
+cadena_contextualizadora = prompt_contexto | llm | StrOutputParser()
 
 
 def inicializar_agente_graph_rag():
     """
-    Inicializa a Gemini y lo acopla con el grafo de Neo4j
-    para traducir lenguaje natural a consultas Cypher.
+    Inicializa la cadena GraphCypherQAChain acoplada con el grafo de Neo4j
+    reutilizando la instancia global del LLM.
     """
     grafo = obtener_grafo_ia()
     
@@ -71,11 +72,7 @@ def inicializar_agente_graph_rag():
         print("❌ No se pudo inicializar el agente porque falló la conexión al grafo.")
         return None
         
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-flash-latest",  # 👈 Actualizado a Gemini 3 Flash para mayor precisión lógica
-        temperature=0
-    )
-    
+    # Usamos el 'llm' global que ya declaramos arriba
     cadena_ia = GraphCypherQAChain.from_llm(
         llm=llm,
         graph=grafo,
@@ -116,7 +113,6 @@ if __name__ == "__main__":
                 continue
                 
             try:
-                # Ventana deslizante de protección: enviamos solo los últimos 4 mensajes (2 turnos)
                 if len(historial_chat) > 0:
                     pregunta_final = cadena_contextualizadora.invoke({
                         "chat_history": historial_chat[-4:],  
@@ -132,7 +128,6 @@ if __name__ == "__main__":
                 print("\n🤖 Agente:")
                 print(respuesta["result"])
                 
-                # Persistencia estratégica ultra ligera en memoria RAM para las pruebas de terminal
                 historial_chat.append(HumanMessage(content=pregunta_usuario))
                 historial_chat.append(AIMessage(content="Entendido. Te mostré los resultados correspondientes filtrados en el grafo."))
                 
