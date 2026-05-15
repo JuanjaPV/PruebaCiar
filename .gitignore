@@ -141,3 +141,22 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# ==============================================================================
+# Python Backend Configuration
+# ==============================================================================
+# Entornos virtuales locales
+.venv/
+venv/
+ENV/
+env/
+
+# Caché de compilación de Python (Bytecode)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Caché de herramientas de testing o entorno
+.pytest_cache/
+.ipynb_checkpoints/

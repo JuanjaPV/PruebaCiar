@@ -9,7 +9,7 @@ Se diseñó e implementó un modelo de datos basado en grafos (Property Graph Mo
 
 #### 1. Nodos 
 * **`Publicacion`**: Nodo central del dataset. Su clave única (`Key`) es `id_publicacion`. Almacena la propiead titulo y propiedades cuantitativas indexables como `año` (Integer) y `numero_citas` (Integer).
-* **`Autor`**: Representa a los investigadores. Clave única: `nombre_autor`. Su separación del nodo publicación permite trazar redes de coautoría complejas.
+* **`Autor`**: Representa a los investigadores. Clave única: `nombre_autor`.
 * **`Institucion`**: Entidad de afiliación. Clave única: `nombre_institucion`. Almacena  la propiedad `pais_institucion`.
 * **`Topico`**, **`Palabra_clave`** y **`venue`**: Nodos categóricos y taxonómicos que actúan como índices estructurales para agrupar la producción científica por áreas de IA, etiquetas y medios de difusión respectivamente.
 
