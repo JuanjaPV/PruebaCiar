@@ -32,9 +32,6 @@ PROMPT_QA_PERSONALIZADO = PromptTemplate(
     template=plantilla_qa
 )
 
-# ==============================================================================
-# 🌟 INSTANCIA GLOBAL DE GEMINI (Centralizado para importación externa)
-# ==============================================================================
 # Al dejarlo global, main.py lo puede importar sin problemas para su aduana de control
 llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0)
 
@@ -84,9 +81,8 @@ def inicializar_agente_graph_rag():
     
     return cadena_ia
 
-# ==============================================================================
 # Laboratorio de pruebas interactivo en la Terminal con Memoria Contextual
-# ==============================================================================
+
 if __name__ == "__main__":
     print(" Inicializando Agente GraphRAG con Gemini...")
     
