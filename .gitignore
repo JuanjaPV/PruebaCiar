@@ -160,3 +160,5 @@ __pycache__/
 # Caché de herramientas de testing o entorno
 .pytest_cache/
 .ipynb_checkpoints/
+
+historial_chats.db
